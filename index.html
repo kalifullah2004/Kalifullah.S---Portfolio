@@ -119,6 +119,7 @@ ul {
 
 .toast.success { border-left-color: #10B981; }
 .toast.info { border-left-color: #38BDF8; }
+.toast.error { border-left-color: #EF4444; }
 
 @keyframes slideInToast {
   from { transform: translateX(100%); opacity: 0; }
@@ -2849,6 +2850,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const feedback = document.getElementById('formFeedback');
   const submitBtn = document.getElementById('submitBtn');
 
+  // IMPORTANT: Replace this with YOUR deployed Google Apps Script Web App URL.
+  // (Deploy google-script.js in Apps Script -> Deploy -> New deployment -> Web app
+  //  -> Execute as "Me" -> Who has access "Anyone" -> copy the resulting URL here.)
   const GOOGLE_APPS_SCRIPT_URL = 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL';
 
   if (form) {
@@ -2857,6 +2861,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const honeypot = document.getElementById('website').value;
       if (honeypot) return;
+
+      if (GOOGLE_APPS_SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL') {
+        feedback.textContent = "Form is not connected yet: set GOOGLE_APPS_SCRIPT_URL in index.html to your deployed Apps Script Web App URL.";
+        feedback.className = 'form-feedback error';
+        feedback.classList.remove('hidden');
+        showToast("Form not connected to Google Sheet yet.", "info");
+        return;
+      }
 
       feedback.classList.add('hidden');
       feedback.className = 'form-feedback hidden';
@@ -2893,12 +2905,13 @@ document.addEventListener('DOMContentLoaded', () => {
           throw new Error(result.error || 'Server error');
         }
       } catch (err) {
-        console.error('Submission Info:', err);
-        feedback.textContent = "Your inquiry has been submitted! (Ready to persist live entries when connected to your Google Apps Script Web App URL).";
-        feedback.classList.add('success');
+        // Genuine failure (bad URL, sheet permissions, network issue, etc.)
+        // Show this honestly instead of a false "success" message so leads aren't silently lost.
+        console.error('Submission failed:', err);
+        feedback.textContent = "Sorry, something went wrong sending your inquiry. Please try again or email/WhatsApp me directly.";
+        feedback.classList.add('error');
         feedback.classList.remove('hidden');
-        showToast("Inquiry submitted! (Ready to connect with your Google Sheet URL)", "info");
-        form.reset();
+        showToast("Submission failed. Please try again.", "error");
       } finally {
         submitBtn.disabled = false;
         submitBtn.querySelector('.btn-text').textContent = 'Send Project Inquiry';
